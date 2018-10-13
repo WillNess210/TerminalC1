@@ -28,8 +28,9 @@ class AlgoStrategy(gamelib.AlgoCore):
         game_state.submit_turn()
 
     def starter_strategy(self, game_state):
-        self.build_defences(game_state)
-        self.deploy_attackers(game_state)
+        if game_state.turn_number > 0:
+            self.build_defences(game_state)
+            self.deploy_attackers(game_state)
 
 
     def build_defences(self, game_state):
@@ -55,7 +56,7 @@ class AlgoStrategy(gamelib.AlgoCore):
         for location in filter_locations:
             if game_state.can_spawn(FILTER, location):
                 game_state.attempt_spawn(FILTER, location)
-        encryptor_locations = [[2, 13], [25, 13]]
+        encryptor_locations = [[2, 13]]
         for location in encryptor_locations:
             if game_state.attempt_spawn(ENCRYPTOR, location):
                 game_state.attempt_spawn(ENCRYPTOR, location)
