@@ -34,19 +34,27 @@ class AlgoStrategy(gamelib.AlgoCore):
 
     def build_defences(self, game_state):
         firewall_locations = []
-        for newx in range(2, 25, 5):
-            firewall_locations.append([newx, 13])
-        # now fill in the rest if possible
-        for radius in range(0, 11):
+        for radius in range(0, 5):
             for direction in [-1, 1]:
-                start = 13
-                if direction == 1:
-                    start = 14
-                firewall_locations.append([start + (radius * direction), 13])
+                start = 12
+                if direction == -1:
+                    start = 15
+                newx = start + (direction * radius * 3)
+                firewall_locations.append([newx, 12])
         for location in firewall_locations:
             if game_state.can_spawn(DESTRUCTOR, location):
                 game_state.attempt_spawn(DESTRUCTOR, location)
-
+        filter_locations = []
+        for radius in range(0, 12):
+            for direction in [-1, 1]:
+                start = 13
+                if direction == -1:
+                    start = 14
+                newx = start + (direction * radius)
+                filter_locations.append([newx, 13])
+        for location in filter_locations:
+            if game_state.can_spawn(FILTER, location):
+                game_state.attempt_spawn(FILTER, location)
 
     def deploy_attackers(self, game_state):
         if game_state.get_resource(game_state.BITS) < 10:
