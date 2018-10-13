@@ -140,10 +140,14 @@ def get_all_lanes():
 def get_lane(left_lane, lane_num):
     lane = []
     if left_lane == 1:
-        for dist in range(0, 15):
+        lane.append([13 - lane_num, 0 + lane_num])
+        for dist in range(1, 15):
+            lane.append([13 - lane_num + dist - 1, 0 + lane_num + dist])
             lane.append([13 - lane_num + dist, 0 + lane_num + dist])
     else:
-        for dist in range(0, 15):
+        lane.append([14 + lane_num, 0 + lane_num])
+        for dist in range(1, 15):
+            lane.append([14 + lane_num - dist + 1, 0 + lane_num + dist])
             lane.append([14 + lane_num - dist, 0 + lane_num + dist])
     return lane
 
