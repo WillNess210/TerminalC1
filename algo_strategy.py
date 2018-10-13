@@ -5,9 +5,11 @@ import warnings
 from sys import maxsize
 
 class AlgoStrategy(gamelib.AlgoCore):
+    spawnBottomLeft = 1
     def __init__(self):
         super().__init__()
         random.seed()
+        self.spawnBottomLeft = 1
 
     def on_game_start(self, config):
         gamelib.debug_write('Configuring your custom algo strategy...')
@@ -29,6 +31,8 @@ class AlgoStrategy(gamelib.AlgoCore):
 
     def starter_strategy(self, game_state):
         if game_state.turn_number > 0:
+            if game_state.turn_number == 1:
+                self.spawnBottomLeft = 0
             self.build_defences(game_state)
             self.deploy_attackers(game_state)
 
@@ -65,8 +69,11 @@ class AlgoStrategy(gamelib.AlgoCore):
         if game_state.get_resource(game_state.BITS) < 10:
             return
         if game_state.can_spawn(PING, [14, 0]):
-            bits = int(math.floor(game_state.get_resource(game_state.BITS)))
-            game_state.attempt_spawn(PING, [14, 0], bits)
+            numSpawn = game_state.number_affordable(PING)
+            if self.spawnBottomLeft == 1:
+                game_state.attempt_spawn(PING, [13, 0], numSpawn)
+            else:
+                game_state.attempt_spawn(PING, [14, 0], numSpawn)
 
     def filter_blocked_locations(self, locations, game_state):
         filtered = []
