@@ -38,21 +38,21 @@ class AlgoStrategy(gamelib.AlgoCore):
 
     def starter_strategy(self, game_state):
         if game_state.turn_number > 0:
+            self.remove_lane_defences(game_state)
+            self.build_defences(game_state)
             self.determine_attack(game_state)
             if self.attack_turn:
-                self.remove_lane_defences(game_state)
-                self.build_defences(game_state)
                 self.deploy_attackers(game_state)
-            else:
-                self.remove_lane_defences(game_state)
-                self.build_defences(game_state)
 
     def determine_attack(self, game_state):
         if game_state.get_resource(game_state.BITS) >= 10 and game_state.turn_number > 0:
-            self.attack_turn = True
             self.attack_lane = self.get_best_lane(game_state)
-        else:
-            self.attack_turn = False
+            move_path = get_path_using_lane(game_state, self.attack_lane)
+            # if the last element of the path is on their side, then attack
+            if move_path[-1][1] > 13:
+                self.attack_turn = True
+                return
+        self.attack_turn = False
 
     def remove_lane_defences(self, game_state):
         game_state.attempt_remove(self.attack_lane)
@@ -136,13 +136,21 @@ def get_all_lanes():
     return lanes
 
 
+def get_path_using_lane(game_state, lane):
+    first_point_x = lane[0][0]
+    if first_point_x <= 13:
+        return get_path(game_state, 1, 13 - first_point_x)
+    else:
+        return get_path(game_state, 0, first_point_x - 14)
+
+
 # 14 possible lanes, input 0-13, 0 is at bottom, 13 is on middle corners || PASS 1 FOR LEFT LANE, PASS 0 FOR RIGHT LANE
 def get_path(game_state, left_lane, lane_num):
     if left_lane == 1:
         starting_point = [13 - lane_num, 0 + lane_num]
         target_edge = game_state.game_map.TOP_RIGHT
     else:
-        starting_point = [14 + lane_num, 0 - lane_num]
+        starting_point = [14 + lane_num, 0 + lane_num]
         target_edge = game_state.game_map.TOP_LEFT
     return game_state.find_path_to_edge(starting_point, target_edge)
 
