@@ -24,7 +24,7 @@ class AlgoStrategy(gamelib.AlgoCore):
 
     def on_turn(self, turn_state):
         game_state = gamelib.GameState(self.config, turn_state)
-        gamelib.debug_write('Performing turn {} of your custom algo strategy'.format(game_state.turn_number))
+        gamelib.debug_write('-----{}-----'.format(game_state.turn_number))
         # game_state.suppress_warnings(True)  #Uncomment this line to suppress warnings.
         self.starter_strategy(game_state)
         game_state.submit_turn()
@@ -75,13 +75,39 @@ class AlgoStrategy(gamelib.AlgoCore):
             else:
                 game_state.attempt_spawn(PING, [14, 0], numSpawn)
 
-    def filter_blocked_locations(self, locations, game_state):
-        filtered = []
-        for location in locations:
-            if not game_state.contains_stationary_unit(location):
-                filtered.append(location)
-        return filtered
+    def pointInsideMap(self, point):
+        if point in self.getAllPoints():
+            return True
+        return False
+    
+    def getAllPoints(self):
+        return self.getMyPoints() + self.getEnemyPoints()
 
+    def getMyPoints(self):
+        points = []
+        y = 0
+        startx = 13
+        width = 2
+        while startx >= 0:
+            for newx in range(startx, startx + width):
+                points.append([newx, y])
+            y = y + 1
+            startx = startx - 1
+            width = width + 2
+        return points
+
+    def getEnemyPoints(self):
+        points = []
+        y = 27
+        startx = 13
+        width = 2
+        while startx >= 0:
+            for newx in range(startx, startx + width):
+                points.append([newx, y])
+            y = y - 1
+            startx = startx - 1
+            width = width + 2
+        return points
 
 if __name__ == "__main__":
     algo = AlgoStrategy()
