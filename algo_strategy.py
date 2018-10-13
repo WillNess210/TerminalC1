@@ -55,6 +55,10 @@ class AlgoStrategy(gamelib.AlgoCore):
         for location in filter_locations:
             if game_state.can_spawn(FILTER, location):
                 game_state.attempt_spawn(FILTER, location)
+        encryptor_locations = [[2, 13], [25, 13]]
+        for location in encryptor_locations:
+            if game_state.attempt_spawn(ENCRYPTOR, location):
+                game_state.attempt_spawn(ENCRYPTOR, location)
 
     def deploy_attackers(self, game_state):
         if game_state.get_resource(game_state.BITS) < 10:
