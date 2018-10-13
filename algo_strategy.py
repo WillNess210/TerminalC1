@@ -8,6 +8,7 @@ from sys import maxsize
 class AlgoStrategy(gamelib.AlgoCore):
     attack_turn = False
     attack_lane = []
+    attack_direction = 0  # 1 if placing units on left, 0 for right
 
     def __init__(self):
         super().__init__()
@@ -37,19 +38,24 @@ class AlgoStrategy(gamelib.AlgoCore):
         game_state.submit_turn()
 
     def starter_strategy(self, game_state):
-        if game_state.turn_number > 0:
-            self.remove_lane_defences(game_state)
+        if game_state.turn_number >= 0:
+            self.attack_direction = self.get_best_direction(game_state)
             self.build_defences(game_state)
             self.determine_attack(game_state)
             if self.attack_turn:
                 self.deploy_attackers(game_state)
 
     def determine_attack(self, game_state):
-        if game_state.get_resource(game_state.BITS) >= 10 and game_state.turn_number > 0:
-            self.attack_lane = self.get_best_lane(game_state)
-            move_path = get_path_using_lane(game_state, self.attack_lane)
-            # if the last element of the path is on their side, then attack
-            if move_path[-1][1] > 13:
+        if game_state.get_resource(game_state.BITS) >= 10 and 0 < game_state.turn_number < 8:
+            move_path = get_path(game_state, self.attack_direction, 0)
+            # if the last element of the path is on their side or top of ours, then attack
+            if move_path[-1][1] >= 13:
+                self.attack_turn = True
+                return
+        elif game_state.get_resource(game_state.BITS) >= 12 and game_state.turn_number >= 8:
+            move_path = get_path(game_state, self.attack_direction, 0)
+            # if the last element of the path is on their side or top of ours, then attack
+            if move_path[-1][1] >= 13:
                 self.attack_turn = True
                 return
         self.attack_turn = False
@@ -59,16 +65,27 @@ class AlgoStrategy(gamelib.AlgoCore):
 
     def build_defences(self, game_state):
         # build points
-        destructor_locations = [[1, 12], [4, 12], [8, 12], [12, 12], [15, 12], [19, 12], [23, 12], [26, 12]]
-        filter_locations = [[0, 13], [1, 13], [2, 13], [3, 13], [4, 13], [5, 13], [6, 13], [7, 13], [8, 13], [9, 13],
-                            [10, 13], [11, 13], [12, 13], [13, 13], [14, 13], [15, 13], [16, 13], [17, 13], [18, 13],
-                            [19, 13], [20, 13], [21, 13], [22, 13], [23, 13], [24, 13], [25, 13], [26, 13], [27, 13]]
-        # removing our attack lane
-        for lane_point in self.attack_lane:
-            if lane_point in destructor_locations:
-                destructor_locations.remove(lane_point)
-            if lane_point in filter_locations:
-                filter_locations.remove(lane_point)
+        destructor_locations = [[3, 12], [4, 12], [23, 12], [24, 12], [4, 11], [5, 11], [6, 11], [11, 11], [13, 11],
+                                [14, 11], [16, 11], [21, 11], [22, 11], [23, 11]]
+        left_destructor_locations = [[0, 13], [1, 12], [2, 12], [3, 11]]
+        right_destructor_locations = [[27, 13], [25, 12], [26, 12], [24, 11]]
+        filter_locations = [[2, 13], [3, 13], [4, 13], [5, 13], [22, 13], [23, 13], [24, 13], [25, 13], [5, 12],
+                            [6, 12], [7, 12], [20, 12], [21, 12], [22, 12], [7, 11], [8, 11], [9, 11], [10, 11],
+                            [12, 11], [15, 11], [17, 11], [18, 11], [19, 11], [20, 11]]
+        left_filter_locations = [[1, 13]]
+        right_filter_locations = [[26, 13]]
+        remove_locations = []
+        # putting together what we want to build
+        if self.attack_direction == 1:
+            destructor_locations += left_destructor_locations
+            filter_locations += left_filter_locations
+            remove_locations += right_destructor_locations
+            remove_locations += right_filter_locations
+        else:
+            destructor_locations += right_destructor_locations
+            filter_locations += right_filter_locations
+            remove_locations += left_destructor_locations
+            remove_locations += left_filter_locations
         # building, priority to destructors
         for location in destructor_locations:
             if game_state.can_spawn(DESTRUCTOR, location):
@@ -76,14 +93,21 @@ class AlgoStrategy(gamelib.AlgoCore):
         for location in filter_locations:
             if game_state.can_spawn(FILTER, location):
                 game_state.attempt_spawn(FILTER, location)
+        # marking for removal
+        for location in remove_locations:
+            if game_state.contains_stationary_unit(location):
+                game_state.remove_unit(location)
 
     def deploy_attackers(self, game_state):
-        best_lane = self.attack_lane
-        spawn_point = best_lane[0]
-        if game_state.can_spawn(PING, spawn_point):
-            num_spawn = game_state.number_affordable(PING)
-            game_state.attempt_remove(best_lane)
-            game_state.attempt_spawn(PING, spawn_point, num_spawn)
+        spawn_point = [14 - self.attack_direction, 0]
+        if game_state.turn_number > 8:
+            if game_state.can_spawn(EMP, spawn_point):
+                num_spawn = game_state.number_affordable(EMP)
+                game_state.attempt_spawn(EMP, spawn_point, num_spawn)
+        else:
+            if game_state.can_spawn(PING, spawn_point):
+                num_spawn = game_state.number_affordable(PING)
+                game_state.attempt_spawn(PING, spawn_point, num_spawn)
 
     def get_opponent_destructors(self, game_state):
         destructors = []
@@ -104,6 +128,14 @@ class AlgoStrategy(gamelib.AlgoCore):
                 best_lane = lane
                 best_score = score
         return best_lane
+
+    def get_best_direction(self, game_state):
+        damage_map = self.get_damage_map(game_state)
+        left_lane = get_lane_score(get_lane(1, 0), damage_map)
+        right_lane = get_lane_score(get_lane(0, 0), damage_map)
+        if left_lane > right_lane:
+            return 1
+        return 0
 
     def get_damage_map(self, game_state):
         damage_map = [[0 for x in range(28)] for y in range(28)]
