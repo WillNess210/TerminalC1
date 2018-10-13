@@ -34,10 +34,10 @@ class AlgoStrategy(gamelib.AlgoCore):
 
     def build_defences(self, game_state):
         firewall_locations = []
-        for newx in range(0, 27, 5):
+        for newx in range(2, 25, 5):
             firewall_locations.append([newx, 13])
         # now fill in the rest if possible
-        for radius in range(0, 13):
+        for radius in range(0, 11):
             for direction in [-1, 1]:
                 start = 13
                 if direction == 1:
