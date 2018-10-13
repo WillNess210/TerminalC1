@@ -6,12 +6,12 @@ from sys import maxsize
 
 
 class AlgoStrategy(gamelib.AlgoCore):
-    spawnBottomLeft = 1
+    attack_turn = False
+    attack_lane = []
 
     def __init__(self):
         super().__init__()
         random.seed()
-        self.spawnBottomLeft = 1
 
     def on_game_start(self, config):
         gamelib.debug_write('Configuring your custom algo strategy...')
@@ -23,63 +23,66 @@ class AlgoStrategy(gamelib.AlgoCore):
         PING = config["unitInformation"][3]["shorthand"]
         EMP = config["unitInformation"][4]["shorthand"]
         SCRAMBLER = config["unitInformation"][5]["shorthand"]
+        self.attack_lane = get_lane(0, 0)
 
     def on_turn(self, turn_state):
+        # GET GAME STATE
         game_state = gamelib.GameState(self.config, turn_state)
+        # START DEBUG
         gamelib.debug_write('-----{}-----'.format(game_state.turn_number))
         # game_state.suppress_warnings(True)  #Uncomment this line to suppress warnings.
+        # RUN STRATEGY
         self.starter_strategy(game_state)
+        # SUBMIT TURN
         game_state.submit_turn()
 
     def starter_strategy(self, game_state):
         if game_state.turn_number > 0:
-            if game_state.turn_number == 1:
-                self.spawnBottomLeft = 0
-            self.build_defences(game_state)
-            self.deploy_attackers(game_state)
+            self.determine_attack(game_state)
+            if self.attack_turn:
+                self.remove_lane_defences(game_state)
+                self.build_defences(game_state)
+                self.deploy_attackers(game_state)
+            else:
+                self.remove_lane_defences(game_state)
+                self.build_defences(game_state)
+
+    def determine_attack(self, game_state):
+        if game_state.get_resource(game_state.BITS) >= 10 and game_state.turn_number > 0:
+            self.attack_turn = True
+            self.attack_lane = self.get_best_lane(game_state)
+        else:
+            self.attack_turn = False
+
+    def remove_lane_defences(self, game_state):
+        game_state.attempt_remove(self.attack_lane)
 
     def build_defences(self, game_state):
-        firewall_locations = []
-        for radius in range(0, 5):
-            for direction in [-1, 1]:
-                start = 12
-                if direction == -1:
-                    start = 15
-                newx = start + (direction * radius * 3)
-                firewall_locations.append([newx, 12])
-        for location in firewall_locations:
+        # build points
+        destructor_locations = [[1, 12], [4, 12], [8, 12], [12, 12], [15, 12], [19, 12], [23, 12], [26, 12]]
+        filter_locations = [[0, 13], [1, 13], [2, 13], [3, 13], [4, 13], [5, 13], [6, 13], [7, 13], [8, 13], [9, 13],
+                            [10, 13], [11, 13], [12, 13], [13, 13], [14, 13], [15, 13], [16, 13], [17, 13], [18, 13],
+                            [19, 13], [20, 13], [21, 13], [22, 13], [23, 13], [24, 13], [25, 13], [26, 13], [27, 13]]
+        # removing our attack lane
+        for lane_point in self.attack_lane:
+            if lane_point in destructor_locations:
+                destructor_locations.remove(lane_point)
+            if lane_point in filter_locations:
+                filter_locations.remove(lane_point)
+        # building, priority to destructors
+        for location in destructor_locations:
             if game_state.can_spawn(DESTRUCTOR, location):
                 game_state.attempt_spawn(DESTRUCTOR, location)
-        filter_locations = []
-        for radius in range(0, 12):
-            for direction in [-1, 1]:
-                start = 13
-                if direction == -1:
-                    start = 14
-                newx = start + (direction * radius)
-                filter_locations.append([newx, 13])
         for location in filter_locations:
             if game_state.can_spawn(FILTER, location):
                 game_state.attempt_spawn(FILTER, location)
-        encryptor_locations = [[2, 13]]
-        for location in encryptor_locations:
-            if game_state.attempt_spawn(ENCRYPTOR, location):
-                game_state.attempt_spawn(ENCRYPTOR, location)
 
     def deploy_attackers(self, game_state):
-        if game_state.get_resource(game_state.BITS) < 10:
-            return
-        damage_map = self.get_damage_map(game_state)
-        best_lane = get_lane(0, 0)
-        best_score = -9999
-        for lane in get_all_lanes():
-            score = get_lane_score(lane, damage_map)
-            if score > best_score:
-                best_lane = lane
-                best_score = score
+        best_lane = self.attack_lane
         spawn_point = best_lane[0]
         if game_state.can_spawn(PING, spawn_point):
             num_spawn = game_state.number_affordable(PING)
+            game_state.attempt_remove(best_lane)
             game_state.attempt_spawn(PING, spawn_point, num_spawn)
 
     def get_opponent_destructors(self, game_state):
@@ -90,6 +93,17 @@ class AlgoStrategy(gamelib.AlgoCore):
                 if unit.unit_type == 'DF':
                     destructors.append([unit.x, unit.y])
         return destructors
+
+    def get_best_lane(self, game_state):
+        damage_map = self.get_damage_map(game_state)
+        best_lane = get_lane(0, 0)
+        best_score = -9999
+        for lane in get_all_lanes():
+            score = get_lane_score(lane, damage_map)
+            if score > best_score:
+                best_lane = lane
+                best_score = score
+        return best_lane
 
     def get_damage_map(self, game_state):
         damage_map = [[0 for x in range(28)] for y in range(28)]
@@ -111,6 +125,7 @@ def get_lane_score(lane, damage_map):
         y = point[1]
         score -= (damage_map[x][y] * 10)
     return score
+
 
 # returns a list of all lanes
 def get_all_lanes():
