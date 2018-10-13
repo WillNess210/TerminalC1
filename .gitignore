@@ -1,0 +1,15 @@
+
+documentation/.buildinfo
+*.pickle
+*.doctree
+*.html
+*.txt
+*.gif
+*.css
+*.png
+*.js
+*.md
+*.ps1
+*.sh
+documentation/
+gamelib/
