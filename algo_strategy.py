@@ -4,8 +4,10 @@ import math
 import warnings
 from sys import maxsize
 
+
 class AlgoStrategy(gamelib.AlgoCore):
     spawnBottomLeft = 1
+
     def __init__(self):
         super().__init__()
         random.seed()
@@ -35,7 +37,6 @@ class AlgoStrategy(gamelib.AlgoCore):
                 self.spawnBottomLeft = 0
             self.build_defences(game_state)
             self.deploy_attackers(game_state)
-
 
     def build_defences(self, game_state):
         firewall_locations = []
@@ -69,45 +70,50 @@ class AlgoStrategy(gamelib.AlgoCore):
         if game_state.get_resource(game_state.BITS) < 10:
             return
         if game_state.can_spawn(PING, [14, 0]):
-            numSpawn = game_state.number_affordable(PING)
+            num_spawn = game_state.number_affordable(PING)
             if self.spawnBottomLeft == 1:
-                game_state.attempt_spawn(PING, [13, 0], numSpawn)
+                game_state.attempt_spawn(PING, [13, 0], num_spawn)
             else:
-                game_state.attempt_spawn(PING, [14, 0], numSpawn)
+                game_state.attempt_spawn(PING, [14, 0], num_spawn)
 
-    def pointInsideMap(self, point):
-        if point in self.getAllPoints():
-            return True
-        return False
-    
-    def getAllPoints(self):
-        return self.getMyPoints() + self.getEnemyPoints()
 
-    def getMyPoints(self):
-        points = []
-        y = 0
-        startx = 13
-        width = 2
-        while startx >= 0:
-            for newx in range(startx, startx + width):
-                points.append([newx, y])
-            y = y + 1
-            startx = startx - 1
-            width = width + 2
-        return points
+def point_inside_map(self, point):
+    if point in self.get_all_points():
+        return True
+    return False
 
-    def getEnemyPoints(self):
-        points = []
-        y = 27
-        startx = 13
-        width = 2
-        while startx >= 0:
-            for newx in range(startx, startx + width):
-                points.append([newx, y])
-            y = y - 1
-            startx = startx - 1
-            width = width + 2
-        return points
+
+def get_all_points():
+    return get_my_points() + get_enemy_points()
+
+
+def get_my_points():
+    points = []
+    y = 0
+    startx = 13
+    width = 2
+    while startx >= 0:
+        for newx in range(startx, startx + width):
+            points.append([newx, y])
+        y = y + 1
+        startx = startx - 1
+        width = width + 2
+    return points
+
+
+def get_enemy_points():
+    points = []
+    y = 27
+    startx = 13
+    width = 2
+    while startx >= 0:
+        for newx in range(startx, startx + width):
+            points.append([newx, y])
+        y = y - 1
+        startx = startx - 1
+        width = width + 2
+    return points
+
 
 if __name__ == "__main__":
     algo = AlgoStrategy()
