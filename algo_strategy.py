@@ -137,6 +137,17 @@ def get_all_lanes():
 
 
 # 14 possible lanes, input 0-13, 0 is at bottom, 13 is on middle corners || PASS 1 FOR LEFT LANE, PASS 0 FOR RIGHT LANE
+def get_path(game_state, left_lane, lane_num):
+    if left_lane == 1:
+        starting_point = [13 - lane_num, 0 + lane_num]
+        target_edge = game_state.game_map.TOP_RIGHT
+    else:
+        starting_point = [14 + lane_num, 0 - lane_num]
+        target_edge = game_state.game_map.TOP_LEFT
+    return game_state.find_path_to_edge(starting_point, target_edge)
+
+
+# 14 possible lanes, input 0-13, 0 is at bottom, 13 is on middle corners || PASS 1 FOR LEFT LANE, PASS 0 FOR RIGHT LANE
 def get_lane(left_lane, lane_num):
     lane = []
     if left_lane == 1:
