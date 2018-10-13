@@ -49,25 +49,9 @@ class AlgoStrategy(gamelib.AlgoCore):
 
 
     def deploy_attackers(self, game_state):
-        if (game_state.get_resource(game_state.BITS) < 10):
-            return
-
-        if game_state.can_spawn(EMP, [3, 10]):
-            game_state.attempt_spawn(EMP, [3, 10])
-
-        if game_state.can_spawn(PING, [14, 0], 3):
-            game_state.attempt_spawn(PING, [14, 0], 3)
-
-        friendly_edges = game_state.game_map.get_edge_locations(
-            game_state.game_map.BOTTOM_LEFT) + game_state.game_map.get_edge_locations(game_state.game_map.BOTTOM_RIGHT)
-
-        deploy_locations = self.filter_blocked_locations(friendly_edges, game_state)
-
-        while game_state.get_resource(game_state.BITS) >= game_state.type_cost(SCRAMBLER) and len(deploy_locations) > 0:
-            deploy_index = random.randint(0, len(deploy_locations) - 1)
-            deploy_location = deploy_locations[deploy_index]
-
-            game_state.attempt_spawn(SCRAMBLER, deploy_location)
+        if game_state.can_spawn(PING, [14, 0]):
+            bits = int(math.floor(game_state.get_resource(game_state.BITS)))
+            game_state.attempt_spawn(PING, [14, 0], bits)
 
     def filter_blocked_locations(self, locations, game_state):
         filtered = []
