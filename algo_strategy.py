@@ -49,6 +49,8 @@ class AlgoStrategy(gamelib.AlgoCore):
 
 
     def deploy_attackers(self, game_state):
+        if game_state.get_resource(game_state.BITS) < 10:
+            return
         if game_state.can_spawn(PING, [14, 0]):
             bits = int(math.floor(game_state.get_resource(game_state.BITS)))
             game_state.attempt_spawn(PING, [14, 0], bits)
