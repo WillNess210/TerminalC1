@@ -69,12 +69,68 @@ class AlgoStrategy(gamelib.AlgoCore):
     def deploy_attackers(self, game_state):
         if game_state.get_resource(game_state.BITS) < 10:
             return
-        if game_state.can_spawn(PING, [14, 0]):
+        damage_map = self.get_damage_map(game_state)
+        best_lane = get_lane(0, 0)
+        best_score = -9999
+        for lane in get_all_lanes():
+            score = get_lane_score(lane, damage_map)
+            if score > best_score:
+                best_lane = lane
+                best_score = score
+        spawn_point = best_lane[0]
+        if game_state.can_spawn(PING, spawn_point):
             num_spawn = game_state.number_affordable(PING)
-            if self.spawnBottomLeft == 1:
-                game_state.attempt_spawn(PING, [13, 0], num_spawn)
-            else:
-                game_state.attempt_spawn(PING, [14, 0], num_spawn)
+            game_state.attempt_spawn(PING, spawn_point, num_spawn)
+
+    def get_opponent_destructors(self, game_state):
+        destructors = []
+        for enemyPoint in get_enemy_points():
+            units = game_state.game_map[enemyPoint[0], enemyPoint[1]]
+            for unit in units:
+                if unit.unit_type == 'DF':
+                    destructors.append([unit.x, unit.y])
+        return destructors
+
+    def get_damage_map(self, game_state):
+        damage_map = [[0 for x in range(28)] for y in range(28)]
+        destructors = self.get_opponent_destructors(game_state)
+        for destructor in destructors:
+            locs = game_state.game_map.get_locations_in_range(destructor, 3)
+            for location in locs:
+                damage_map[location[0]][location[1]] += 4
+        return damage_map
+
+
+# scores a lane - takes in a lane and the damage map
+def get_lane_score(lane, damage_map):
+    # subtract the starting points y from the score to break ties
+    # to prioritize lanes that will travel most of it's path on my side
+    score = 1000 - lane[0][1]
+    for point in lane:
+        x = point[0]
+        y = point[1]
+        score -= (damage_map[x][y] * 10)
+    return score
+
+# returns a list of all lanes
+def get_all_lanes():
+    lanes = []
+    for direction in [0, 1]:
+        for lane_num in range(0, 14):
+            lanes.append(get_lane(direction, lane_num))
+    return lanes
+
+
+# 14 possible lanes, input 0-13, 0 is at bottom, 13 is on middle corners || PASS 1 FOR LEFT LANE, PASS 0 FOR RIGHT LANE
+def get_lane(left_lane, lane_num):
+    lane = []
+    if left_lane == 1:
+        for dist in range(0, 15):
+            lane.append([13 - lane_num + dist, 0 + lane_num + dist])
+    else:
+        for dist in range(0, 15):
+            lane.append([14 + lane_num - dist, 0 + lane_num + dist])
+    return lane
 
 
 def point_inside_map(self, point):
