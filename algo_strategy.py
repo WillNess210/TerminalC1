@@ -67,7 +67,16 @@ class AlgoStrategy(gamelib.AlgoCore):
             location = item[1]
             if game_state.can_spawn(type, location):
                 game_state.attempt_spawn(type, location)
-        # TODO If I can still build destructors
+        # If I can still build destructors, (AKA EVERYTHINGS BUILT) mark weak ones for removal
+        cores_next_turn = game_state.get_resource(game_state.CORES) + 4
+        if game_state.number_affordable(DESTRUCTOR) > 0:
+            possible_locations = get_my_points()
+            for location in possible_locations:
+                unit = game_state.game_map[location[0], location[1]][0]
+                if unit.unit_type == DESTRUCTOR and unit.stability < unit.max_stability/2 and cores_next_turn >= 3:
+                    game_state.attempt_removal(location)
+                    cores_next_turn -= 3
+
 
     def deploy_attackers(self, game_state):
         if game_state.get_resource(game_state.BITS) < 10 and game_state.turn_number < 8:
@@ -80,6 +89,20 @@ class AlgoStrategy(gamelib.AlgoCore):
         spawn_point = [13, 0]
         num_spawn = game_state.number_affordable(type_to_spawn)
         game_state.attempt_spawn(type_to_spawn, spawn_point, num_spawn)
+
+
+def get_my_points():
+    points = []
+    y = 0
+    startx = 13
+    width = 2
+    while startx >= 0:
+        for newx in range(startx, startx + width):
+            points.append([newx, y])
+        y = y + 1
+        startx = startx - 1
+        width = width + 2
+    return points
 
 
 if __name__ == "__main__":
