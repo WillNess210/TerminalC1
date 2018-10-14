@@ -11,7 +11,7 @@ class AlgoStrategy(gamelib.AlgoCore):
         random.seed()
 
     def on_game_start(self, config):
-        gamelib.debug_write('----- START -----')
+        gamelib.debug_write('Configuring your custom algo strategy...')
         self.config = config
         global FILTER, ENCRYPTOR, DESTRUCTOR, PING, EMP, SCRAMBLER
         FILTER = config["unitInformation"][0]["shorthand"]
@@ -23,7 +23,8 @@ class AlgoStrategy(gamelib.AlgoCore):
 
     def on_turn(self, turn_state):
         game_state = gamelib.GameState(self.config, turn_state)
-        gamelib.debug_write('----- {} -----'.format(game_state.turn_number))
+        gamelib.debug_write('Performing turn {} of your custom algo strategy'.format(game_state.turn_number))
+        # game_state.suppress_warnings(True)  #Uncomment this line to suppress warnings.
         self.starter_strategy(game_state)
         game_state.submit_turn()
 
@@ -32,53 +33,31 @@ class AlgoStrategy(gamelib.AlgoCore):
         self.deploy_attackers(game_state)
 
     def build_defences(self, game_state):
-        to_build = [["DESTRUCTOR", [27, 13]], ["DESTRUCTOR", [1, 12]], ["DESTRUCTOR", [13, 11]],
-                    ["DESTRUCTOR", [7, 11]], ["DESTRUCTOR", [18, 11]], ["DESTRUCTOR", [9, 11]],
-                    ["DESTRUCTOR", [24, 10]], ["DESTRUCTOR", [25, 11]], ["FILTER", [0, 13]], ["FILTER", [1, 13]],
-                    ["FILTER", [2, 13]],
-                    ["FILTER", [3, 13]], ["FILTER", [4, 12]], ["FILTER", [5, 12]], ["FILTER", [6, 12]],
-                    ["FILTER", [7, 12]], ["FILTER", [8, 12]], ["FILTER", [9, 12]], ["FILTER", [10, 12]],
-                    ["FILTER", [11, 12]], ["FILTER", [12, 12]], ["FILTER", [13, 12]], ["FILTER", [14, 12]],
-                    ["FILTER", [15, 12]], ["FILTER", [16, 12]], ["FILTER", [17, 12]], ["FILTER", [18, 12]],
-                    ["FILTER", [19, 12]], ["FILTER", [20, 12]], ["FILTER", [21, 12]], ["FILTER", [22, 12]],
-                    ["DESTRUCTOR", [26, 12]], ["FILTER", [26, 13]], ["FILTER", [25, 12]],
-                    ["FILTER", [24, 11]], ["FILTER", [23, 10]], ["DESTRUCTOR", [2, 12]], ["DESTRUCTOR", [3, 12]],
-                    ["DESTRUCTOR", [21, 11]], ["ENCRYPTOR", [19, 11]], ["FILTER", [6, 9]], ["FILTER", [7, 9]],
-                    ["FILTER", [8, 9]], ["FILTER", [9, 9]], ["FILTER", [10, 9]], ["FILTER", [11, 9]],
-                    ["FILTER", [12, 9]], ["FILTER", [13, 9]], ["FILTER", [14, 9]], ["FILTER", [15, 9]],
-                    ["FILTER", [16, 9]], ["FILTER", [17, 9]], ["FILTER", [18, 9]], ["FILTER", [19, 9]],
-                    ["FILTER", [20, 9]], ["FILTER", [21, 9]], ["FILTER", [22, 9]], ["DESTRUCTOR", [16, 11]],
-                    ["DESTRUCTOR", [4, 11]], ["DESTRUCTOR", [10, 11]], ["DESTRUCTOR", [9, 11]],
-                    ["DESTRUCTOR", [11, 11]], ["DESTRUCTOR", [15, 11]], ["DESTRUCTOR", [12, 11]],
-                    ["DESTRUCTOR", [14, 11]], ["DESTRUCTOR", [5, 11]], ["DESTRUCTOR", [8, 11]],
-                    ["DESTRUCTOR", [17, 11]], ["DESTRUCTOR", [20, 11]], ["DESTRUCTOR", [6, 11]],
-                    ["DESTRUCTOR", [23, 9]], ["DESTRUCTOR", [22, 8]], ["DESTRUCTOR", [21, 8]], ["DESTRUCTOR", [19, 8]],
-                    ["DESTRUCTOR", [17, 8]], ["DESTRUCTOR", [15, 8]], ["DESTRUCTOR", [13, 8]], ["DESTRUCTOR", [11, 8]],
-                    ["DESTRUCTOR", [9, 8]], ["DESTRUCTOR", [7, 8]]]
+        to_build = [["DESTRUCTOR", [0, 13]], ["DESTRUCTOR", [27, 13]], ["DESTRUCTOR", [7, 11]],
+                    ["DESTRUCTOR", [20, 11]], ["FILTER", [1, 13]], ["FILTER", [2, 13]], ["FILTER", [25, 13]],
+                    ["FILTER", [26, 13]], ["FILTER", [3, 12]], ["FILTER", [24, 12]], ["FILTER", [4, 11]],
+                    ["FILTER", [5, 11]], ["FILTER", [6, 11]], ["FILTER", [21, 11]], ["FILTER", [22, 11]],
+                    ["FILTER", [23, 11]], ["FILTER", [9, 12]], ["DESTRUCTOR", [9, 11]], ["FILTER", [12, 12]],
+                    ["DESTRUCTOR", [12, 11]], ["FILTER", [15, 12]], ["DESTRUCTOR", [15, 11]], ["FILTER", [18, 12]],
+                    ["DESTRUCTOR", [18, 11]]]
         for item in to_build:
             itemtype = item[0]
-            type = DESTRUCTOR
+            firewall_type = DESTRUCTOR
             if itemtype == "FILTER":
-                type = FILTER
+                firewall_type = FILTER
             elif itemtype == "ENCRYPTOR":
-                type = ENCRYPTOR
+                firewall_type = ENCRYPTOR
             elif itemtype != "DESTRUCTOR":
                 gamelib.debug_write("preset build loadin is messed up with an input of: " + itemtype)
             location = item[1]
-            if game_state.can_spawn(type, location):
-                game_state.attempt_spawn(type, location)
-        # If I can still build destructors, (AKA EVERYTHINGS BUILT) mark weak ones for removal
-        cores_next_turn = game_state.get_resource(game_state.CORES) + 4
-        if game_state.number_affordable(DESTRUCTOR) > 0:
-            possible_locations = get_my_points()
-            for location in possible_locations:
-                unit = game_state.game_map[location[0], location[1]][0]
-                if unit.unit_type == DESTRUCTOR and unit.stability < unit.max_stability/2 and cores_next_turn >= 3:
-                    game_state.attempt_removal(location)
-                    cores_next_turn -= 3
-
+            if game_state.can_spawn(firewall_type, location):
+                game_state.attempt_spawn(firewall_type, location)
+        # TODO implement destructor replacement
+        # TODO implement path creation
 
     def deploy_attackers(self, game_state):
+        # TODO place units at location that will travel the longest
+        # TODO choose unit type based on if they can reach wall or if we want to do building damage
         if game_state.get_resource(game_state.BITS) < 10 and game_state.turn_number < 8:
             return
         if game_state.get_resource(game_state.BITS) < 12 and game_state.turn_number >= 8:
@@ -89,20 +68,6 @@ class AlgoStrategy(gamelib.AlgoCore):
         spawn_point = [13, 0]
         num_spawn = game_state.number_affordable(type_to_spawn)
         game_state.attempt_spawn(type_to_spawn, spawn_point, num_spawn)
-
-
-def get_my_points():
-    points = []
-    y = 0
-    startx = 13
-    width = 2
-    while startx >= 0:
-        for newx in range(startx, startx + width):
-            points.append([newx, y])
-        y = y + 1
-        startx = startx - 1
-        width = width + 2
-    return points
 
 
 if __name__ == "__main__":
