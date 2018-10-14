@@ -67,6 +67,7 @@ class AlgoStrategy(gamelib.AlgoCore):
             location = item[1]
             if game_state.can_spawn(type, location):
                 game_state.attempt_spawn(type, location)
+        # TODO If I can still build destructors
 
     def deploy_attackers(self, game_state):
         if game_state.get_resource(game_state.BITS) < 10 and game_state.turn_number < 8:
