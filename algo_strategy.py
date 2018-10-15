@@ -112,16 +112,12 @@ class AlgoStrategy(gamelib.AlgoCore):
         # If I can't make it to other side, don't spawn anything
         if game_state.find_path_to_edge([13, 0], game_state.game_map.TOP_RIGHT)[-1][1] < 13:
             return
-        if game_state.get_resource(game_state.BITS) < 10:
+        if game_state.get_resource(game_state.BITS) < 8:
             return
-        if self.initialStageBuilt:
-            if self.count_destroyables(game_state) > 20:
-                game_state.attempt_spawn(EMP, [24, 10], game_state.number_affordable(EMP))
-            else:
-                game_state.attempt_spawn(PING, [24, 10], game_state.number_affordable(PING))
-
+        if self.count_destroyables(game_state) > 20:
+            game_state.attempt_spawn(EMP, [24, 10], game_state.number_affordable(EMP))
         else:
-            game_state.attempt_spawn(PING, [14, 0], 10)
+            game_state.attempt_spawn(PING, [24, 10], game_state.number_affordable(PING))
 
     def count_destroyables(self, game_state):
         score = 0
