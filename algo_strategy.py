@@ -115,6 +115,8 @@ class AlgoStrategy(gamelib.AlgoCore):
         if game_state.get_resource(game_state.BITS) < 8:
             return
         if self.count_destroyables(game_state) > 20:
+            if game_state.get_resource(game_state.BITS) < 12:
+                return
             game_state.attempt_spawn(EMP, [24, 10], game_state.number_affordable(EMP))
         else:
             game_state.attempt_spawn(PING, [24, 10], game_state.number_affordable(PING))
