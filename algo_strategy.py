@@ -89,8 +89,6 @@ class AlgoStrategy(gamelib.AlgoCore):
                         ["DESTRUCTOR", [18, 11]], ["FILTER", [8, 11]], ["FILTER", [19, 11]], ["FILTER", [10, 11]],
                         ["FILTER", [17, 11]], ["FILTER", [11, 11]], ["FILTER", [16, 11]], ["DESTRUCTOR", [2, 12]],
                         ["DESTRUCTOR", [2, 11]], ["DESTRUCTOR", [4, 12]]]
-            for i in range(4, 25):
-                to_build.append(["DESTRUCTOR", [i, 13]])
             # remove wall
             if game_state.contains_stationary_unit([3, 12]):
                 game_state.attempt_remove([3, 12])
